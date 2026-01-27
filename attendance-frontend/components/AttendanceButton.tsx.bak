@@ -1,0 +1,5 @@
+import{Button}from "react-native";
+
+export default function AttendanceButton({ onPress }){
+    return <Button title="Mark Attendance" onPress={onPress} />;
+}
