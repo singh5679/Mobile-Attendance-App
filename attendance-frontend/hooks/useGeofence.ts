@@ -16,8 +16,10 @@ export const getCurrentLocation = async () => {
   const location = await Location.getCurrentPositionAsync({
     accuracy :Location.Accuracy.High,
   });// myself
-  console.log("Latitude:", location.coords.latitude);
-  console.log("Longitude:", location.coords.longitude);
+  console.log("Student Current Location:",
+   location.coords.latitude,
+   location.coords.longitude
+)
   return {
     latitude: location.coords.latitude,
     longitude: location.coords.longitude,

@@ -1,9 +1,10 @@
 const mongoose = require("mongoose");
 
 const AttendanceSchema = new mongoose.Schema({
-  userId: {
+  student: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
+    ref: "User",
+    required: true
   },
   date: {
     type: Date,
@@ -11,11 +12,24 @@ const AttendanceSchema = new mongoose.Schema({
   },
   latitude: Number,
   longitude: Number,
+  //distance : Number,
   status:{ 
     type: String,
     enum: ['present', 'absent', 'late'],
     required: true
   },
+  class: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Class",
+    required: true
+  },
+
+  subjectId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Subject",
+    required: true
+  }
+
 });
 
 module.exports = mongoose.model("Attendance", AttendanceSchema);

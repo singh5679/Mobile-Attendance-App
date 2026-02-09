@@ -1,0 +1,31 @@
+const mongoose = require("mongoose");
+
+const ClassSchema = new mongoose.Schema({
+  teacherId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+
+  subject: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Subject",
+    required: true,
+  },
+
+  students: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
+  latitude: Number,
+  longitude: Number,
+  radius: {
+    type: Number,
+    default: 100,
+  },
+}, { timestamps: true });
+
+module.exports = mongoose.model("Class", ClassSchema);
+

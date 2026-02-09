@@ -1,70 +1,42 @@
-const router = require("express").Router();
+const express = require("express");
+const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
-const { default: mongoose } = require("mongoose");
+//const GeoFence = require("../models/GeoFence");
+const {markAttendance} = require("../controllers/attendanceController");
+
 const Attendance = require("../models/Attendance");
-const GeoFence = require("../models/GeoFence");
 
+ const mongoose = require("mongoose");
 
-// Haversine Formula to calculate distance between two lat-long points
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-
-  const a =
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI/180) *
-    Math.cos(lat2 * Math.PI/180) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
 
 // Mark Attendance 
-router.post("/mark",authMiddleware, async (req, res) => {
-  const {latitude, longitude } = req.body;
-  const userId = req.userId; // From authMiddleware
-  const fence = await GeoFence.findOne();
-  if (!fence) return res.status(404).json({ message: "GeoFence not set" });
+router.post("/mark", authMiddleware, markAttendance);
 
-  const distance = calculateDistance(
-    latitude,
-    longitude,
-    fence.latitude,
-    fence.longitude
-  );
-  console.log("Distance :",distance);//
-  if (distance > fence.radius) {
-    return res.status(403).json({ 
-      message: "Outside Geo-Fence",
-      status: "OUTSIDE_GEOFENCE",
-      distance: Math.round(distance)
-     });
-  }
-
-  await Attendance.create({
-    userId,
-    latitude,
-    longitude,
-    status: "present"
-  });
-
-  res.json({ 
-    message: "Attendance Marked Successfully" ,
-    status: "present",
-    distance: Math.round(distance)
-  });
-
-});
 
 //histroy 
-router.get("/history/:userId", async (req, res) => {
-  const{ userId } = req.params;
-  if(!mongoose.Types.ObjectId.isValid(userId)){
-    return res.status(400).json({ message: "Invalid User ID" });
+
+router.get("/history", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid User ID" });
+    }
+
+    const records = await Attendance.find({ studentId:userId })
+      .populate("subjectId", "name")
+      .sort({ date: -1 });
+
+    console.log("History user:", userId);
+    console.log("Records found:", records.length);
+
+    return res.status(200).json(records);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch history" });
   }
-  const records = await Attendance.find({ userId });
-  res.json(records);
 });
+
+
 
 module.exports = router; 

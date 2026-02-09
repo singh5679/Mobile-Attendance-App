@@ -1,5 +1,6 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Tabs ,router } from 'expo-router';
+import { useEffect } from 'react';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 //import { HapticTab } from '@/components/haptic-tab';
 // import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -8,6 +9,13 @@ import React from 'react';
 
 export default function TabLayout() {
   //const colorScheme = useColorScheme();
+  useEffect(() => {
+    AsyncStorage.getItem("token").then(token => {
+      if (!token) {
+        router.replace("/login");
+      }
+    });
+  }, []);
 
   return (
     <Tabs
@@ -18,7 +26,7 @@ export default function TabLayout() {
        }}
        >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: 'Home',
          // tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,

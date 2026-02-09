@@ -6,6 +6,7 @@ const connectDB = require("./config/db");
 
 const app = express();
 connectDB();
+const classRoutes = require("./routes/class");
 
 app.use(express.json());
 //app.use(cors());
@@ -15,6 +16,8 @@ app.use(cors({ origin: "*",
 
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/attendance", require("./routes/attendance"));
+app.use("/api/class", classRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("Attendance Backend Running");
