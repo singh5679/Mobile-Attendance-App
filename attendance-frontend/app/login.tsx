@@ -1,127 +1,159 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+
+
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { useState } from "react";
 import { router } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import API from "../constants/api";
+import API from "@/constants/api";
+import { useAuth } from "../context/authContext";
 
 export default function Login() {
+  const { login } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    try {
-      const res = await API.post("/auth/login", {
-        email,
-        password,
-      });
-       console.log("Login response:", res.data);
-
-  //    const { token , user } = res.data;
-  //    await AsyncStorage.setItem("token", token);
-  //    await AsyncStorage.setItem("role", user.role);
-
-  //    // Role Based Redirect 
-  //    if(user.role === "teacher"){
-  //     router.replace("/teacher/home");//Teacher dashboard
-  //    }else{
-  //     router.replace("/(student-tabs)/home");//Student dashboard
-
-  //    }
-  //   } catch (err: any) {
-  //     Alert.alert("Login Failed", err?.response?.data?.message || "Error");
-  //      Alert.alert(
-  //   "Login failed",
-  //   err?.response?.data?.message || "Something went wrong"
-  // );
-  //   }
-  // };
-  const token = res.data.token;
-    if (!token) {
-      throw new Error("Token missing");
+    if (!email || !password) {
+      alert("Please enter email & password");
+      return;
     }
-    await AsyncStorage.setItem("token", token);
-     
-    const role = res.data.user?.role;
-    if (role === "teacher") {
+
+    try {
+    const res = await API.post("/auth/login", {
+      email,
+      password,
+    });
+
+    await login(res.data);
+    router.replace("/"); // Redirect to root, authContext will handle the rest
+
+    // 🔥 ADD THIS
+    if (res.data.user.role === "teacher") {
       router.replace("/teacher/home");
     } else {
       router.replace("/(student-tabs)/home");
     }
-    
+
   } catch (err: any) {
-    console.log("LOGIN ERROR:", err?.response?.data || err);
-    
-    if (err.response) {
-    Alert.alert(err.response.data.message);
-  } else {
-    Alert.alert("Network error. Check server & URL");
-  }
-  }
-};
+    const message = err?.response?.data?.message;
+  
+     if (message === "User not found") {
+      Alert.alert(
+        "User not found",
+        "You are not registered. Please create an account.",
+        [
+          {
+            text: "Go to Register",
+            onPress: () => router.push("/register"),
+          },
+        ]
+      );
+    } else {
+      Alert.alert("Error", message || "Login failed");
+    }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <View style={styles.card}>
+        <Text style={styles.title}>Attendance System</Text>
+        <Text style={styles.subtitle}>Login to continue</Text>
 
-      <TextInput
-        placeholder="Email"
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-      />
+        <TextInput
+          placeholder="Email"
+          placeholderTextColor="#888"
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+        />
 
-      <TextInput
-        placeholder="Password"
-        secureTextEntry
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-      />
+        <TextInput
+          placeholder="Password"
+          placeholderTextColor="#888"
+          secureTextEntry
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+        />
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Login</Text>
+          )}
+        </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/register")}>
-        <Text style={styles.link}>Create new account</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/register")}>
+          <Text style={styles.link}>Don’t have an account? Register</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#4A90E2",
     justifyContent: "center",
-    padding: 20,
-    backgroundColor: "#f2f2f2",
+    alignItems: "center",
+  },
+  card: {
+    width: "90%",
+    backgroundColor: "#fff",
+    padding: 25,
+    borderRadius: 15,
+    elevation: 5,
   },
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 30,
+    marginBottom: 5,
+  },
+  subtitle: {
+    textAlign: "center",
+    color: "#666",
+    marginBottom: 20,
   },
   input: {
-    backgroundColor: "#fff",
-    padding: 14,
+    backgroundColor: "#f2f2f2",
+    padding: 12,
     borderRadius: 8,
     marginBottom: 15,
   },
   button: {
-    backgroundColor: "#4f46e5",
+    backgroundColor: "#4A90E2",
     padding: 15,
     borderRadius: 8,
+    alignItems: "center",
   },
   buttonText: {
     color: "#fff",
-    textAlign: "center",
-    fontWeight: "600",
+    fontWeight: "bold",
+    fontSize: 16,
   },
   link: {
     marginTop: 15,
     textAlign: "center",
-    color: "#4f46e5",
+    color: "black",
+    fontWeight: "600",
   },
 });

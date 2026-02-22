@@ -1,386 +1,393 @@
-// import { View, Text, Button, Alert } from "react-native";
+// import {
+//   Text,
+//   TouchableOpacity,
+//   StyleSheet,
+//   Alert,
+//   ActivityIndicator,
+//   ScrollView,
+// } from "react-native";
+// import { useEffect, useState } from "react";
+// import * as Location from "expo-location";
+// import { router } from "expo-router";
 // import API from "@/constants/api";
-// import { getCurrentLocation } from "@/hooks/useGeofence";
 
-// export default function AttendanceScreen() {
+// type ClassType = {
+//   _id: string;
+//   name: string;
+//   subject?: {
+//     name: string;
+//   };
+// };
+
+// export default function MarkAttendance() {
+//   const [classes, setClasses] = useState<ClassType[]>([]);
+//   const [classId, setClassId] = useState<string>("");
+//   const [loading, setLoading] = useState(false);
+
+//   useEffect(() => {
+//     const fetchClasses = async () => {
+//       try {
+//         const res = await API.get("/classes/my");
+//         setClasses(res.data);
+//       } catch (err: any) {
+//         console.log(err);
+//         Alert.alert("Error", "Failed to load classes");
+//       }
+//     };
+
+//     fetchClasses();
+//   }, []);
 
 //   const markAttendance = async () => {
 //     try {
-//       const location = await getCurrentLocation();
+//       setLoading(true);
 
-//       const response = await API.post("/attendance/mark", {
-//         latitude: location.latitude,
-//         longitude: location.longitude,
+//       if (!classId) {
+//         Alert.alert("Select Class", "Please select a class first");
+//         return;
+//       }
+
+//       const { status } = await Location.requestForegroundPermissionsAsync();
+
+//       if (status !== "granted") {
+//         Alert.alert("Permission Denied", "Enable location permission");
+//         return;
+//       }
+
+//       const loc = await Location.getCurrentPositionAsync({});
+
+//       const res = await API.post("/attendance/mark", {
+//         latitude: loc.coords.latitude,
+//         longitude: loc.coords.longitude,
+//         classId,
 //       });
 
 //       Alert.alert(
-//         "Attendance Result",
-//         `${response.data.message}\nStatus: ${response.data.status}`
+//         "Attendance Marked ✅",
+//         `Status: ${res.data.status.toUpperCase()}
+// Distance: ${res.data.distance.toFixed(2)} meters`,
+//         [
+//           {
+//             text: "OK",
+//             onPress: () => router.back(), // 🔥 Go back to Home
+//           },
+//         ]
 //       );
 
-//     } catch (error: any) {
-//       console.log(error?.response?.data || error);
-//       Alert.alert("Error", "Could not mark attendance");
+//     } catch (err: any) {
+//       Alert.alert(
+//         "Error",
+//         err?.response?.data?.message || "Server error"
+//       );
+//     } finally {
+//       setLoading(false);
 //     }
 //   };
 
 //   return (
-//     <View
-//       style={{
-//         flex: 1,
-//         justifyContent: "center",
-//         alignItems: "center",
-//         backgroundColor: "#f5f7fb",
-//       }}
-//     >
-//       <Text style={{ fontSize: 20, marginBottom: 20, fontWeight: "600" }}>
-//         Geo-Fence Attendance
-//       </Text>
+//     <ScrollView contentContainerStyle={styles.container}>
+//       <Text style={styles.heading}>📍 Mark Attendance</Text>
+//       <Text style={styles.subHeading}>Select Your Class</Text>
 
-//       <Button title="Mark Attendance" onPress={markAttendance} />
-//     </View>
-//   );
-// }
-
-
-
-
-// import {
-//   View,
-//   Text,
-//   StyleSheet,
-//   TouchableOpacity,
-//   Alert,
-// } from "react-native";
-// import { useState } from "react";
-// import * as Device from "expo-device";
-// import API from "@/constants/api";
-// import { getCurrentLocation } from "@/hooks/useGeofence";
-
-// export default function AttendanceScreen() {
-//   const [location, setLocation] = useState<any>(null);
-//   const [result, setResult] = useState<any>(null);
-//   const [distance, setDistance] = useState<number | null>(null);
-
-//   // 🔹 Campus location (example – change if needed)
-//   const CAMPUS_LAT = 26.8467;
-//   const CAMPUS_LNG = 80.9462;
-
-//   // 🔹 Haversine distance (meters)
-//   const calculateDistance = (
-//     lat1: number,
-//     lon1: number,
-//     lat2: number,
-//     lon2: number
-//   ) => {
-//     const toRad = (v: number) => (v * Math.PI) / 180;
-//     const R = 6371e3;
-
-//     const dLat = toRad(lat2 - lat1);
-//     const dLon = toRad(lon2 - lon1);
-
-//     const a =
-//       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-//       Math.cos(toRad(lat1)) *
-//         Math.cos(toRad(lat2)) *
-//         Math.sin(dLon / 2) *
-//         Math.sin(dLon / 2);
-
-//     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-//     return Math.round(R * c);
-//   };
-
-//   const markAttendance = async () => {
-//     try {
-//       const loc = await getCurrentLocation();
-//       setLocation(loc);
-
-//       const dist = calculateDistance(
-//         loc.latitude,
-//         loc.longitude,
-//         CAMPUS_LAT,
-//         CAMPUS_LNG
-//       );
-//       setDistance(dist);
-
-//       const response = await API.post("/attendance/mark", {
-//         latitude: loc.latitude,
-//         longitude: loc.longitude,
-//       });
-
-//       setResult({
-//         status: response.data.status,
-//         message: response.data.message,
-//         time: new Date().toLocaleTimeString(),
-//         date: new Date().toDateString(),
-//       });
-
-//       Alert.alert("Attendance", response.data.message);
-//     } catch (error: any) {
-//       console.log(error?.response?.data || error);
-//       Alert.alert("Error", "Could not mark attendance");
-//     }
-//   };
-
-//   const statusColor =
-//     result?.status === "Present"
-//       ? "#22C55E"
-//       : result?.status
-//       ? "#EF4444"
-//       : "#999";
-
-//   return (
-//     <View style={styles.container}>
-//       <Text style={styles.title}>Geo-Fence Attendance</Text>
-
-//       {/* DEVICE INFO */}
-//       <View style={styles.card}>
-//         <Text style={styles.cardTitle}>Device Info</Text>
-//         <Text style={styles.info}>OS: {Device.osName}</Text>
-//         <Text style={styles.info}>Model: {Device.modelName}</Text>
-//       </View>
-
-//       {/* LOCATION INFO */}
-//       <View style={styles.card}>
-//         <Text style={styles.cardTitle}>Device Location</Text>
-//         <Text style={styles.info}>
-//           Latitude: {location?.latitude ?? "Not fetched"}
-//         </Text>
-//         <Text style={styles.info}>
-//           Longitude: {location?.longitude ?? "Not fetched"}
-//         </Text>
-//         <Text style={styles.info}>
-//           Distance from Campus:{" "}
-//           {distance !== null ? `${distance} meters` : "Not calculated"}
-//         </Text>
-//       </View>
-
-//       {/* ATTENDANCE RESULT */}
-//       {result && (
-//         <View style={styles.card}>
-//           <Text style={styles.cardTitle}>Attendance Status</Text>
-
-//           <View
+//       {classes.map((c) => (
+//         <TouchableOpacity
+//           key={c._id}
+//           style={[
+//             styles.subjectCard,
+//             classId === c._id && styles.selectedCard,
+//           ]}
+//           onPress={() => setClassId(c._id)}
+//         >
+//           <Text
 //             style={[
-//               styles.badge,
-//               { backgroundColor: statusColor },
+//               styles.subjectText,
+//               classId === c._id && styles.selectedText,
 //             ]}
 //           >
-//             <Text style={styles.badgeText}>{result.status}</Text>
-//           </View>
+//             {c.name} {c.subject?.name ? `(${c.subject.name})` : ""}
+//           </Text>
+//         </TouchableOpacity>
+//       ))}
 
-//           <Text style={styles.info}>Date: {result.date}</Text>
-//           <Text style={styles.info}>Time: {result.time}</Text>
-//           <Text style={styles.message}>{result.message}</Text>
-//         </View>
-//       )}
-
-//       {/* BUTTON */}
-//       <TouchableOpacity style={styles.button} onPress={markAttendance}>
-//         <Text style={styles.buttonText}>Mark Attendance</Text>
+//       <TouchableOpacity
+//         style={[
+//           styles.markButton,
+//           (!classId || loading) && { opacity: 0.6 },
+//         ]}
+//         disabled={!classId || loading}
+//         onPress={markAttendance}
+//       >
+//         {loading ? (
+//           <ActivityIndicator color="#fff" />
+//         ) : (
+//           <Text style={styles.markButtonText}>🚀 Mark Now</Text>
+//         )}
 //       </TouchableOpacity>
-//     </View>
+//     </ScrollView>
 //   );
 // }
 
 // const styles = StyleSheet.create({
 //   container: {
-//     flex: 1,
+//     padding: 20,
 //     backgroundColor: "#F4F6FA",
-//     padding: 16,
+//     flexGrow: 1,
 //   },
-//   title: {
+//   heading: {
 //     fontSize: 22,
-//     fontWeight: "700",
-//     marginVertical: 20,
-//     textAlign: "center",
+//     fontWeight: "bold",
+//     marginBottom: 5,
 //   },
-//   card: {
+//   subHeading: {
+//     color: "#666",
+//     marginBottom: 20,
+//   },
+//   subjectCard: {
 //     backgroundColor: "#fff",
 //     padding: 16,
 //     borderRadius: 14,
-//     marginBottom: 16,
+//     marginBottom: 12,
 //     elevation: 3,
 //   },
-//   cardTitle: {
-//     fontSize: 16,
-//     fontWeight: "700",
-//     marginBottom: 10,
-//   },
-//   info: {
-//     fontSize: 14,
-//     marginBottom: 6,
-//     color: "#333",
-//   },
-//   badge: {
-//     alignSelf: "flex-start",
-//     paddingHorizontal: 14,
-//     paddingVertical: 6,
-//     borderRadius: 20,
-//     marginBottom: 10,
-//   },
-//   badgeText: {
-//     color: "#fff",
-//     fontWeight: "700",
-//     fontSize: 14,
-//   },
-//   message: {
-//     marginTop: 8,
-//     fontSize: 14,
-//     fontWeight: "600",
-//     color: "#4F46E5",
-//   },
-//   button: {
+//   selectedCard: {
 //     backgroundColor: "#4F46E5",
-//     paddingVertical: 14,
+//   },
+//   subjectText: {
+//     fontSize: 16,
+//   },
+//   selectedText: {
+//     color: "#fff",
+//     fontWeight: "bold",
+//   },
+//   markButton: {
+//     marginTop: 25,
+//     backgroundColor: "#4F46E5",
+//     padding: 18,
 //     borderRadius: 14,
 //     alignItems: "center",
-//     marginTop: 10,
+//     elevation: 4,
 //   },
-//   buttonText: {
+//   markButtonText: {
 //     color: "#fff",
+//     fontWeight: "bold",
 //     fontSize: 16,
-//     fontWeight: "700",
 //   },
 // });
 
-
-
-
 import {
-  View,
   Text,
-  StyleSheet,
   TouchableOpacity,
+  StyleSheet,
   Alert,
+  ActivityIndicator,
+  ScrollView,
+  View,
 } from "react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import * as Location from "expo-location";
+//import { router } from "expo-router";
 import API from "@/constants/api";
-import { getCurrentLocation } from "@/hooks/useGeofence";
 
-export default function AttendanceScreen() {
-  const [location, setLocation] = useState<any>(null);
+type ClassType = {
+  _id: string;
+  name: string;
+  subject?: {
+    name: string;
+  };
+};
+
+export default function MarkAttendance() {
+  const [classes, setClasses] = useState<ClassType[]>([]);
+  const [classId, setClassId] = useState<string>("");
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
-  const [distance, setDistance] = useState<number | null>(null);
 
-  // ⚠️ TEMP: subjectId (later pass from class/subject screen)
-  const subjectId = "PUT_REAL_SUBJECT_ID_HERE";
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const res = await API.get("/classes/my");
+        setClasses(res.data);
+      } catch (err: any) {
+        console.log(err);
+        Alert.alert("Error", "Failed to load classes");
+      }
+    };
+
+    fetchClasses();
+  }, []);
 
   const markAttendance = async () => {
     try {
-      const loc = await getCurrentLocation();
-      setLocation(loc);
+      setLoading(true);
 
-      const response = await API.post("/attendance/mark", {
-        latitude: loc.latitude,
-        longitude: loc.longitude,
-        subjectId, // 🔥 VERY IMPORTANT
+      if (!classId) {
+        Alert.alert("Select Class", "Please select a class first");
+        return;
+      }
+
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Enable location permission");
+        return;
+      }
+
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
       });
 
-      setDistance(response.data.distance);
-
-      setResult({
-        status: response.data.status,
-        message: response.data.message,
-        time: new Date().toLocaleTimeString(),
-        date: new Date().toDateString(),
+      const res = await API.post("/attendance/mark", {
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        classId,
       });
 
-      Alert.alert("Attendance", response.data.message);
-    } catch (error: any) {
-      console.log("ATTENDANCE ERROR:", error?.response?.data || error);
-      Alert.alert(
-        "Error",
-        error?.response?.data?.message || "Could not mark attendance"
-      );
+      setResult(res.data);
+    } catch (err: any) {
+      Alert.alert("Error", err?.response?.data?.message || "Server error");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const statusColor =
-    result?.status === "present"
-      ? "#22C55E"
-      : result?.status === "absent"
-      ? "#EF4444"
-      : "#999";
+  const getResultColor = () => {
+    if (!result) return "#000";
+
+    if (result.locationStatus === "INSIDE") return "green";
+    if (result.locationStatus === "BOUNDARY") return "orange";
+    return "red";
+  };
+
+  const getEmoji = () => {
+    if (!result) return "";
+    if (result.locationStatus === "INSIDE") return "🟢";
+    if (result.locationStatus === "BOUNDARY") return "🟡";
+    return "🔴";
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Geo-Fence Attendance</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.heading}>📍 Mark Attendance</Text>
+      <Text style={styles.subHeading}>Select Your Class</Text>
 
-      {location && (
-        <View style={styles.card}>
-          <Text>Latitude: {location.latitude}</Text>
-          <Text>Longitude: {location.longitude}</Text>
-          <Text>
-            Distance: {distance ? `${distance} meters` : "N/A"}
+      {classes.map((c) => (
+        <TouchableOpacity
+          key={c._id}
+          style={[styles.subjectCard, classId === c._id && styles.selectedCard]}
+          onPress={() => setClassId(c._id)}
+        >
+          <Text
+            style={[
+              styles.subjectText,
+              classId === c._id && styles.selectedText,
+            ]}
+          >
+            {c.name} {c.subject?.name ? `(${c.subject.name})` : ""}
+          </Text>
+        </TouchableOpacity>
+      ))}
+
+      <TouchableOpacity
+        style={[styles.markButton, (!classId || loading) && { opacity: 0.6 }]}
+        disabled={!classId || loading}
+        onPress={markAttendance}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.markButtonText}>🚀 Mark Now</Text>
+        )}
+      </TouchableOpacity>
+
+      {/* RESULT CARD */}
+      {result && (
+        <View style={[styles.resultCard, { borderColor: getResultColor() }]}>
+          <Text style={[styles.resultTitle, { color: getResultColor() }]}>
+            {getEmoji()} {result.status.toUpperCase()}
+          </Text>
+
+          <Text style={styles.resultText}>
+            📍 Location: {result.locationStatus}
+          </Text>
+
+          <Text style={styles.resultText}>
+            📏 Distance: {result.distance.toFixed(2)} m
+          </Text>
+
+          <Text style={styles.resultText}>
+            🎯 Allowed Radius: {result.allowedRadius} m
+          </Text>
+          <Text style={styles.resultText}>🌍 Latitude: {result.latitude}</Text>
+
+          <Text style={styles.resultText}>
+            🌎 Longitude: {result.longitude}
           </Text>
         </View>
       )}
-
-      {result && (
-        <View style={styles.card}>
-          <View style={[styles.badge, { backgroundColor: statusColor }]}>
-            <Text style={styles.badgeText}>
-              {result.status.toUpperCase()}
-            </Text>
-          </View>
-
-          <Text>{result.date}</Text>
-          <Text>{result.time}</Text>
-          <Text style={styles.message}>{result.message}</Text>
-        </View>
-      )}
-
-      <TouchableOpacity style={styles.button} onPress={markAttendance}>
-        <Text style={styles.buttonText}>Mark Attendance</Text>
-      </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    padding: 20,
     backgroundColor: "#F4F6FA",
-    padding: 16,
+    flexGrow: 1,
   },
-  title: {
+  heading: {
     fontSize: 22,
-    fontWeight: "700",
-    textAlign: "center",
-    marginVertical: 20,
+    fontWeight: "bold",
+    marginBottom: 5,
   },
-  card: {
+  subHeading: {
+    color: "#666",
+    marginBottom: 20,
+  },
+  subjectCard: {
     backgroundColor: "#fff",
     padding: 16,
     borderRadius: 14,
-    marginBottom: 16,
+    marginBottom: 12,
+    elevation: 3,
   },
-  badge: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    alignSelf: "flex-start",
-    marginBottom: 10,
-  },
-  badgeText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-  message: {
-    marginTop: 6,
-    fontWeight: "600",
-    color: "#4F46E5",
-  },
-  button: {
+  selectedCard: {
     backgroundColor: "#4F46E5",
-    paddingVertical: 14,
+  },
+  subjectText: {
+    fontSize: 16,
+  },
+  selectedText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  markButton: {
+    marginTop: 25,
+    backgroundColor: "#4F46E5",
+    padding: 18,
     borderRadius: 14,
     alignItems: "center",
+    elevation: 4,
   },
-  buttonText: {
+  markButtonText: {
     color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
-    fontWeight: "700",
+  },
+  resultCard: {
+    marginTop: 25,
+    padding: 18,
+    borderRadius: 14,
+    backgroundColor: "#fff",
+    borderWidth: 2,
+    elevation: 4,
+  },
+  resultTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  resultText: {
+    fontSize: 15,
+    marginBottom: 5,
   },
 });

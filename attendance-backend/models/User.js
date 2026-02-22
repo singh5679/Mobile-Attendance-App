@@ -10,8 +10,17 @@ const UserSchema = new mongoose.Schema({
     required: true,
   },
   // chnage for teacher and student
-  enrollmentNo: {
+  enrollment: {
     type: String,
+  },
+  // 🔥 NEW FIELDS
+    phone: String,
+    address: String,
+    department: String,
+    course: String,
+    profileImage:{
+     type: String,
+     default:" ",
   },
   classId: {
     type: mongoose.Schema.Types.ObjectId,

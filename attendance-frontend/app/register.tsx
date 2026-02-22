@@ -37,7 +37,6 @@
 //         value={password}
 //         onChangeText={setPassword}
 //       />
-      
 
 //       <TouchableOpacity style={styles.button} onPress={handleRegister}>
 //         <Text style={styles.buttonText}>Register</Text>
@@ -45,7 +44,6 @@
 //     </View>
 //   );
 // }
-
 
 // const styles = StyleSheet.create({
 //   container: {
@@ -83,7 +81,6 @@
 //   },
 // });
 
-
 import {
   View,
   Text,
@@ -100,23 +97,42 @@ export default function RegisterScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [enrollmentNo, setEnrollmentNo] = useState("");
+  const [enrollment, setEnrollment] = useState("");
   const [role, setRole] = useState<"student" | "teacher">("student");
-
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [department, setDepartment] = useState("");
+  const [course, setCourse] = useState("");
   const register = async () => {
     try {
+      // await API.post("/auth/register", {
+      //   name,
+      //   email,
+      //   password,
+      //   role,
+      //   enrollment: role === "student" ? enrollment : undefined,
+      // });
       await API.post("/auth/register", {
-        name,
-        email,
-        password,
-        role,
-        enrollmentNo: role === "student" ? enrollmentNo : undefined,
-      });
+  name,
+  email,
+  password,
+  role,
+  enrollment,
+  phone,
+  address,
+  department,
+  course,
+});
+
 
       Alert.alert("Success", "Registered successfully");
       router.replace("/login");
+      console.log("BASE URL =>", API.defaults.baseURL);//////
     } catch (err: any) {
       console.log(err?.response?.data || err);
+      console.log("STATUS:", err.response?.status);
+  console.log("DATA:", err.response?.data);
+  console.log("MESSAGE:", err.message);
       Alert.alert("Error", err?.response?.data?.message || "Register failed");
     }
   };
@@ -128,34 +144,22 @@ export default function RegisterScreen() {
       {/* ROLE TOGGLE */}
       <View style={styles.roleContainer}>
         <TouchableOpacity
-          style={[
-            styles.roleBtn,
-            role === "student" && styles.activeRole,
-          ]}
+          style={[styles.roleBtn, role === "student" && styles.activeRole]}
           onPress={() => setRole("student")}
         >
           <Text
-            style={[
-              styles.roleText,
-              role === "student" && styles.activeText,
-            ]}
+            style={[styles.roleText, role === "student" && styles.activeText]}
           >
             Student
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.roleBtn,
-            role === "teacher" && styles.activeRole,
-          ]}
+          style={[styles.roleBtn, role === "teacher" && styles.activeRole]}
           onPress={() => setRole("teacher")}
         >
           <Text
-            style={[
-              styles.roleText,
-              role === "teacher" && styles.activeText,
-            ]}
+            style={[styles.roleText, role === "teacher" && styles.activeText]}
           >
             Teacher
           </Text>
@@ -189,10 +193,14 @@ export default function RegisterScreen() {
         <TextInput
           placeholder="Enrollment Number"
           style={styles.input}
-          value={enrollmentNo}
-          onChangeText={setEnrollmentNo}
+          value={enrollment}
+          onChangeText={setEnrollment}
         />
       )}
+      <TextInput placeholder="Phone" style={styles.input} value={phone} onChangeText={setPhone} keyboardType="phone-pad"/>
+      <TextInput placeholder="Address" style={styles.input} value={address} onChangeText={setAddress} />
+      <TextInput placeholder="Department" style={styles.input} value={department} onChangeText={setDepartment} />
+      <TextInput placeholder="Course" style={styles.input} value={course} onChangeText={setCourse} />
 
       <TouchableOpacity style={styles.btn} onPress={register}>
         <Text style={styles.btnText}>Register</Text>
@@ -210,7 +218,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: "center",
-    backgroundColor: "#F4F6FA",
+    backgroundColor: "#e5eaef",
   },
   title: {
     fontSize: 24,

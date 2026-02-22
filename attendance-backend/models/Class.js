@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const ClassSchema = new mongoose.Schema({
+  name:String,
   teacherId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -19,11 +20,19 @@ const ClassSchema = new mongoose.Schema({
       ref: "User",
     },
   ],
-  latitude: Number,
-  longitude: Number,
+  // 🔥 ADD THIS
+  latitude: {
+    type: Number,
+    required: true
+  },
+
+  longitude: {
+    type: Number,
+    required: true
+  },
   radius: {
     type: Number,
-    default: 100,
+    default: 50,
   },
 }, { timestamps: true });
 

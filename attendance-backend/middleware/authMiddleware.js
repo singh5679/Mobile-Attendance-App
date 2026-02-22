@@ -11,7 +11,7 @@ const authMiddleware = (req, res, next) => {
     const token = authHeader.split(" ")[1]; // Bearer <token>
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.userId = decoded.id; // Save userId for later use
+    req.userId = decoded.id || decoded._id;   // 🔥 final fix
     req.userRole = decoded.role; // Save userRole for later use
     
     next();

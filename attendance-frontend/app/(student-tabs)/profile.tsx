@@ -1,45 +1,3 @@
-// import { View, Text,Button, Image, StyleSheet } from "react-native";
-// import AsyncStorage from "@react-native-async-storage/async-storage";
-// import {router}from "expo-router";
-
-// export default function ProfileScreen() {
-//   const logout = async () => {
-//     await AsyncStorage.removeItem("token");
-//     router.replace("/login");
-//   };
-//   return (
-//     <View style={styles.container}>
-//       <Image
-//         source={{
-//           uri: "https://i.pravatar.cc/150" // demo profile image
-//         }}
-//         style={styles.profileImage}
-//       />
-//       <Text style={styles.name}>Himanshu Singh</Text>
-//       <Button title="Logout" onPress={logout} />
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     justifyContent: "center",
-//     alignItems: "center",
-//     backgroundColor: "#fff",
-//   },
-//   profileImage: {
-//     width: 120,
-//     height: 120,
-//     borderRadius: 60,
-//     marginBottom: 10,
-//   },
-//   name: {
-//     fontSize: 18,
-//     fontWeight: "600",
-//   },
-
-// });
 
 
 import {
@@ -49,130 +7,196 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
+import { useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import API from "@/constants/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 
-export default function ProfileScreen() {
-  const logout = async () => {
-    await AsyncStorage.removeItem("token");
-    router.replace("/login");
+export default function Profile() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+    }, [])
+  );
+
+  const fetchProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      const res = await API.get("/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setUser(res.data);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleLogout = async () => {
+    Alert.alert("Logout", "Are you sure?", [
+      { text: "Cancel" },
+      {
+        text: "Yes",
+        onPress: async () => {
+          await AsyncStorage.removeItem("token");
+          router.replace("/login");
+        },
+      },
+    ]);
+  };
+
+  if (loading)
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#4f46e5" />
+      </View>
+    );
+
+  const imageUrl = user?.profileImage
+    ? API.getUri().replace("/api", "") +
+      user.profileImage +
+      "?t=" +
+      Date.now()
+    : null;
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
         <Image
-          source={{
-            uri: "https://i.pravatar.cc/150",
-          }}
+          source={
+            imageUrl
+              ? { uri: imageUrl }
+              : require("../../assets/images/icon.png")
+          }
           style={styles.profileImage}
         />
-        <Text style={styles.name}>Himanshu Singh</Text>
-        <Text style={styles.email}>himanshu@gmail.com</Text>
+        <Text style={styles.name}>{user?.name}</Text>
+        <Text style={styles.role}>{user?.role?.toUpperCase()}</Text>
       </View>
 
-      {/* PERSONAL DETAILS */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Personal Information</Text>
+      {/* PERSONAL INFO */}
+      <Section title="Personal Information">
+        <Field label="Email" value={user?.email} />
+        <Field label="Enrollment" value={user?.enrollment || "N/A"} />
+        <Field label="Phone" value={user?.phone || "N/A"} />
+        <Field label="Address" value={user?.address || "N/A"} />
+      </Section>
 
-        <ProfileRow label="Phone Number" value="+91 9876543210" />
-        <ProfileRow label="Address" value="Lucknow, Uttar Pradesh" />
-      </View>
+      {/* ACADEMIC INFO */}
+      <Section title="Academic Information">
+        <Field label="Department" value={user?.department || "N/A"} />
+        <Field label="Course" value={user?.course || "N/A"} />
+        <Field label="Role" value={user?.role} />
+      </Section>
 
-      {/* ACADEMIC DETAILS */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Academic Information</Text>
+      <TouchableOpacity
+        style={styles.editBtn}
+        onPress={() => router.push("/edit-profile")}
+      >
+        <Text style={styles.btnText}>Edit Profile</Text>
+      </TouchableOpacity>
 
-        <ProfileRow label="Enrollment No" value="CS20230123" />
-        <ProfileRow label="Department" value="Computer Science" />
-        <ProfileRow label="Course" value="B.Tech" />
-      </View>
-
-      {/* LOGOUT */}
-      <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-        <Text style={styles.logoutText}>Logout</Text>
+      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+        <Text style={styles.btnText}>Logout</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
-/* Reusable Row */
-const ProfileRow = ({ label, value }: any) => (
-  <View style={styles.row}>
-    <Text style={styles.label}>{label}</Text>
-    <Text style={styles.value}>{value}</Text>
+const Section = ({ title, children }: any) => (
+  <View style={styles.sectionContainer}>
+    <Text style={styles.sectionTitle}>{title}</Text>
+    <View style={styles.sectionCard}>{children}</View>
+  </View>
+);
+
+const Field = ({ label, value }: any) => (
+  <View style={styles.fieldWrapper}>
+    <Text style={styles.fieldLabel}>{label}</Text>
+    <View style={styles.fieldBox}>
+      <Text style={styles.fieldValue}>{value}</Text>
+    </View>
   </View>
 );
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F4F6FA",
-  },
+  container: { flex: 1, backgroundColor: "#f3f4f6" },
+  loader: { flex: 1, justifyContent: "center", alignItems: "center" },
+
   header: {
+    backgroundColor: "#4f46e5",
+    paddingTop: 60,
+    paddingBottom: 40,
     alignItems: "center",
-    paddingVertical: 30,
-    backgroundColor: "#4F46E5",
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    marginBottom: 20,
   },
+
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     borderWidth: 3,
     borderColor: "#fff",
     marginBottom: 10,
   },
-  name: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#fff",
-  },
-  email: {
-    fontSize: 14,
-    color: "#E0E7FF",
-    marginTop: 4,
-  },
-  card: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 14,
-    elevation: 3,
-  },
+
+  name: { fontSize: 22, fontWeight: "bold", color: "#fff" },
+  role: { fontSize: 14, color: "#e0e7ff" },
+
+  sectionContainer: { marginHorizontal: 20, marginTop: 25 },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
+    color: "#4338ca",
     marginBottom: 12,
   },
-  row: {
-    marginBottom: 12,
+
+  sectionCard: {
+    backgroundColor: "#fff",
+    padding: 18,
+    borderRadius: 18,
   },
-  label: {
-    fontSize: 13,
-    color: "#777",
+
+  fieldWrapper: { marginBottom: 15 },
+  fieldLabel: { fontSize: 12, color: "#6b7280", marginBottom: 5 },
+  fieldBox: {
+    backgroundColor: "#f9fafb",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
-  value: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginTop: 2,
-  },
-  logoutBtn: {
-    backgroundColor: "#EF4444",
-    marginHorizontal: 16,
-    paddingVertical: 14,
+  fieldValue: { fontSize: 15, fontWeight: "600", color: "#111827" },
+
+  editBtn: {
+    backgroundColor: "#4f46e5",
+    margin: 20,
+    padding: 15,
     borderRadius: 14,
     alignItems: "center",
+  },
+
+  logoutBtn: {
+    backgroundColor: "#ef4444",
+    marginHorizontal: 20,
     marginBottom: 30,
+    padding: 15,
+    borderRadius: 14,
+    alignItems: "center",
   },
-  logoutText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
+
+  btnText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 });

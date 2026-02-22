@@ -1,8 +1,7 @@
 const Attendance = require("../models/Attendance");
 const User = require("../models/User");
 const Subject = require("../models/Subject");
-const GeoFence = require("../models/GeoFence");
-
+const Class = require("../models/Class");
 // Haversine formula to calculate distance between two points
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const toRad = (value) => (value * Math.PI) / 180;
@@ -21,122 +20,252 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c; // distance in meters
 }
 
+
 // exports.markAttendance = async (req, res) => {
 //   try {
-//     const { latitude, longitude } = req.body;
+//     const { latitude, longitude, classId } = req.body;
 //     const userId = req.userId;
 
-//     // Check if attendance already marked today
+//     if (!classId) {
+//       return res.status(400).json({ message: "ClassId required" });
+//     }
+
+//     const student = await User.findById(userId);
+//     if (!student) {
+//       return res.status(400).json({ message: "Student not found" });
+//     }
+
+//     // ✅ Get class using classId from frontend
+//     const cls = await Class.findById(classId);
+//     if (!cls) {
+//       return res.status(400).json({ message: "Class not found" });
+//     }
+
+//     // ✅ Check student is enrolled in this class
+//     if (!cls.students.some(id => id.toString() === userId)) {
+//       return res.status(403).json({ message: "Not enrolled in this class" });
+//     }
+
+//     // ✅ Prevent duplicate attendance (CLASS-WISE)
 //     const today = new Date();
 //     today.setHours(0, 0, 0, 0);
 
 //     const existing = await Attendance.findOne({
-//       userId,
+//       student: userId,
+//       classId,
 //       date: { $gte: today },
 //     });
 
 //     if (existing) {
-//       return res.status(400).json({ message: "Attendance already marked" });
+//       return res.status(400).json({
+//         message: "Attendance already marked for today",
+//       });
 //     }
 
-//     // Get geo-fence
-//     const geo = await GeoFence.findOne();
-//     if (!geo) return res.status(400).json({ message: "Geo-fence not found" });
-
-//     const distance = calculateDistance(latitude, longitude, geo.latitude, geo.longitude);
-//     if (distance > geo.radius) {
-//       return res.status(400).json({ message: "Outside geo-fence", distance });
-//     }
-
-//     // Save attendance
-//     const attendance = new Attendance({
-//       userId:req.userId,
+//     // ✅ Calculate distance
+//     const distance = calculateDistance(
 //       latitude,
 //       longitude,
-//       status: "present",
+//       cls.latitude,
+//       cls.longitude
+//     );
+
+//     console.log("Teacher Location:", cls.latitude, cls.longitude);
+//     console.log("Student Location:", latitude, longitude);
+//     console.log("Distance:", distance);
+//     console.log("Radius:", cls.radius);
+
+//     const status = distance <= cls.radius ? "present" : "absent";
+
+//     // if (distance > cls.radius) {
+//     //   return res.status(400).json({
+//     //     message: "Outside geo-fence ❌",
+//     //     status:"absent",
+//     //     distance,
+//     //   });
+//     // }
+
+//     if (distance > cls.radius) {
+
+//   await Attendance.create({
+//     student: userId,
+//     classId,
+//     subjectId: cls.subject,
+//     latitude,
+//     longitude,
+//     status: "absent",
+//     date: new Date(),
+//   });
+
+//   return res.status(400).json({
+//     message: "Outside geo-fence ❌",
+//     status: "absent",
+//     distance,
+//     allowedRadius: cls.radius,
+//   });
+// }
+
+
+//     // // ✅ Save attendance
+//     const attendance = await Attendance.create({
+//       student: userId,
+//       classId,
+//       subjectId: cls.subject, // auto get from class
+//       latitude,
+//       longitude,
+//       status,
+//       distance,
 //       date: new Date(),
 //     });
 
-//     await attendance.save();
+//     res.json({
+//       message: "Attendance marked successfully",
+//       status,
+//       distance,
+//       allowedRadius: cls.radius,
+//     });
 
-//     res.json({ message: "Attendance marked successfully", distance });
 //   } catch (error) {
 //     console.error(error);
 //     res.status(500).json({ message: "Server error" });
 //   }
 // };
 
-
 exports.markAttendance = async (req, res) => {
   try {
-    const { latitude, longitude, subjectId } = req.body;
+    const { latitude, longitude, classId } = req.body;
     const userId = req.userId;
 
-    // 1️⃣ Get student
+    if (!classId) {
+      return res.status(400).json({ message: "ClassId required" });
+    }
+
     const student = await User.findById(userId);
-    if (!student || student.role !== "student") {
-      return res.status(403).json({ message: "Only students can mark attendance" });
+    if (!student) {
+      return res.status(400).json({ message: "Student not found" });
     }
 
-    if (!student.classId) {
-      return res.status(400).json({ message: "Student not assigned to class" });
+    const cls = await Class.findById(classId);
+    if (!cls) {
+      return res.status(400).json({ message: "Class not found" });
     }
 
-    // 2️⃣ Validate subject
-    const subject = await Subject.findById(subjectId);
-    if (!subject || subject.classId.toString() !== student.classId.toString()) {
-      return res.status(400).json({ message: "Invalid subject for this class" });
+    if (!cls.students.some(id => id.toString() === userId)) {
+      return res.status(403).json({ message: "Not enrolled in this class" });
     }
 
-    // 3️⃣ Today check (SUBJECT-WISE)
+    // ✅ Prevent duplicate attendance
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const existing = await Attendance.findOne({
-      studentId: student._id,
-      subjectId,
+      student: userId,
+      classId,
       date: { $gte: today },
     });
 
     if (existing) {
-      return res.status(400).json({ message: "Attendance already marked for this subject" });
+      return res.status(400).json({
+        message: "Attendance already marked for today",
+      });
     }
 
-    // 4️⃣ Geo-fence
-    const geo = await GeoFence.findOne();
-    if (!geo) return res.status(400).json({ message: "Geo-fence not found" });
-
+    // ✅ Calculate distance
     const distance = calculateDistance(
       latitude,
       longitude,
-      geo.latitude,
-      geo.longitude
+      cls.latitude,
+      cls.longitude
     );
 
-    const status = distance <= geo.radius ? "present" : "absent";
+    console.log("Distance:", distance);
+    console.log("Radius:", cls.radius);
 
-    // 5️⃣ Save attendance
-    const attendance = new Attendance({
-      studentId: student._id,
-      classId: student.classId,
-      subjectId,
+    const boundaryTolerance = 1; // 1 meter tolerance
+
+    let status;
+    let locationStatus;
+
+    if (distance < cls.radius - boundaryTolerance) {
+      status = "present";
+      locationStatus = "INSIDE";
+    } 
+    else if (
+      distance >= cls.radius - boundaryTolerance &&
+      distance <= cls.radius + boundaryTolerance
+    ) {
+      status = "present";
+      locationStatus = "BOUNDARY";
+    } 
+    else {
+      status = "absent";
+      locationStatus = "OUTSIDE";
+    }
+
+    // ✅ Save attendance (always save record)
+    const attendance = await Attendance.create({
+      student: userId,
+      classId,
+      subjectId: cls.subject,
       latitude,
       longitude,
-     // distance,
       status,
+      locationStatus,
+      distance,
       date: new Date(),
     });
 
-    await attendance.save();
+    // return res.status(200).json({
+    //   message: "Attendance processed",
+    //   status,
+    //   locationStatus,
+    //   distance,
+    //   allowedRadius: cls.radius,
+    //   attendanceId: attendance._id,///////
+    // });
+    return res.status(200).json({
+  message: "Attendance processed",
+  status,
+  locationStatus,
+  distance,
+  allowedRadius: cls.radius,
+   latitude,
+   longitude,
+  attendanceId: attendance._id,
+});
 
-    res.json({
-      message: "Attendance marked successfully",
-      status,
-      distance,
-    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+     console.error("MARK ATTENDANCE ERROR:", error);
+    res.status(500).json({ message: "Server error" ,error: error.message,
+      name: error.name});
   }
 };
+
+
+// Get attendance history for a student
+exports.getHistory = async (req, res) => {
+  try {
+    console.log("Logged userId:", req.userId);
+    console.log("Logged role:", req.userRole);
+
+    // Only student allowed
+    if (req.userRole !== "student") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const records = await Attendance.find({
+      student: req.userId
+    }).populate("subjectId");
+
+    console.log("Records found:", records.length);
+
+    res.json(records);
+
+  } catch (err) {
+    console.log("History error:", err);
+    res.status(500).json({ message: "Error fetching history" });
+  }
+};
+
+
 

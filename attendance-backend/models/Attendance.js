@@ -15,10 +15,16 @@ const AttendanceSchema = new mongoose.Schema({
   //distance : Number,
   status:{ 
     type: String,
-    enum: ['present', 'absent', 'late'],
+    enum: ['present', 'absent'],
     required: true
   },
-  class: {
+  //location status
+  locationStatus: {
+  type: String,
+  enum: ["INSIDE", "OUTSIDE", "BOUNDARY"],
+  required: true
+},
+  classId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Class",
     required: true
@@ -31,5 +37,11 @@ const AttendanceSchema = new mongoose.Schema({
   }
 
 });
+
+// 🔒 Prevent duplicate attendance
+AttendanceSchema.index(
+  { student: 1, subjectId: 1, date: 1 },
+  { unique: true }
+);
 
 module.exports = mongoose.model("Attendance", AttendanceSchema);

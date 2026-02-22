@@ -1,112 +1,93 @@
+// import { View, Text, FlatList } from "react-native";
+// import { useEffect, useState } from "react";
+// import API from "@/constants/api";
+
+// export default function TeacherClasses() {
+//   const [classes, setClasses] = useState([]);
+
+//   useEffect(() => {
+//     API.get("/classes/my").then(res => setClasses(res.data));
+//   }, []);
+
+//   return (
+//     <FlatList
+//       data={classes}
+//       keyExtractor={(c: any) => c._id}
+//       renderItem={({ item }: any) => (
+//         <View style={{ padding: 15 }}>
+//           <Text>Subject: {item.subject.name}</Text>
+//           <Text>Students: {item.students.length}</Text>
+//         </View>
+//       )}
+//     />
+//   );
+// }
+
 // import {
 //   View,
 //   Text,
-//   TextInput,
+//   FlatList,
 //   TouchableOpacity,
 //   StyleSheet,
-//   Alert,
 // } from "react-native";
-// import { useState } from "react";
-// import API from "@/constants/api";
+// import { useEffect, useState } from "react";
 // import { router } from "expo-router";
+// import API from "@/constants/api";
 
-// export default function ClassScreen() {
-//   const [className, setClassName] = useState("");
-//   const [subject, setSubject] = useState("");
-//   const [department, setDepartment] = useState("");
-//   const [section, setSection] = useState("");
+// export default function TeacherClasses() {
+//   const [classes, setClasses] = useState([]);
 
-//   const createClass = async () => {
-//   if (!className || !subject) {
-//     return Alert.alert("Error", "Class name and subject required");
-//   }
-
-//   try {
-//     await API.post("/class/add", {
-//       subject,
-//       date: new Date(),
-//       latitude: 26.8467,      // demo
-//       longitude: 80.9462,
-//       //radius: 200,
-//     });
-
-//     Alert.alert("Success", "Class created successfully");
-//     router.back();
-//   } catch (err: any) {
-//     console.log(err?.response?.data || err);
-//     Alert.alert("Error", err?.response?.data?.message || "Could not create class");
-//   }
-// };
-
+//   useEffect(() => {
+//     API.get("/classes/my").then((res) => setClasses(res.data));
+//   }, []);
 
 //   return (
-//     <View style={styles.container}>
-//       <Text style={styles.title}>🏫 Create Class</Text>
+//     <FlatList
+//       data={classes}
+//       keyExtractor={(c: any) => c._id}
+//       renderItem={({ item }: any) => (
+//         <View style={styles.card}>
+//           <Text style={styles.subject}>Subject: {item.subject?.name}</Text>
 
-//       <TextInput
-//         placeholder="Class Name (e.g. BCA 3rd Year)"
-//         style={styles.input}
-//         value={className}
-//         onChangeText={setClassName}
-//       />
+//           <Text>Students: {item.students.length}</Text>
 
-//       <TextInput
-//         placeholder="Subject (e.g. Data Structures)"
-//         style={styles.input}
-//         value={subject}
-//         onChangeText={setSubject}
-//       />
-
-//       <TextInput
-//         placeholder="Department (e.g. Computer Science)"
-//         style={styles.input}
-//         value={department}
-//         onChangeText={setDepartment}
-//       />
-
-//       <TextInput
-//         placeholder="Section (A / B)"
-//         style={styles.input}
-//         value={section}
-//         onChangeText={setSection}
-//       />
-
-//       <TouchableOpacity style={styles.btn} onPress={createClass}>
-//         <Text style={styles.btnText}>Create Class</Text>
-//       </TouchableOpacity>
-//     </View>
+//           {/* ✅ View Students Button */}
+//           <TouchableOpacity
+//             style={styles.button}
+//             onPress={() => router.push(`/teacher/teacher-students?classId=${item._id}`)}
+//           >
+//             <Text style={styles.buttonText}>View Students</Text>
+//           </TouchableOpacity>
+//         </View>
+//       )}
+      
+//     />
 //   );
 // }
 
 // const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     padding: 20,
-//     backgroundColor: "#F4F6FA",
-//   },
-//   title: {
-//     fontSize: 24,
-//     fontWeight: "700",
-//     textAlign: "center",
-//     marginBottom: 20,
-//   },
-//   input: {
-//     backgroundColor: "#fff",
-//     padding: 14,
-//     borderRadius: 12,
-//     marginBottom: 12,
-//   },
-//   btn: {
-//     backgroundColor: "#4F46E5",
+//   card: {
 //     padding: 15,
+//     margin: 10,
+//     backgroundColor: "#fff",
 //     borderRadius: 12,
-//     alignItems: "center",
-//     marginTop: 10,
+//     elevation: 3,
 //   },
-//   btnText: {
-//     color: "#fff",
-//     fontWeight: "700",
+//   subject: {
+//     fontWeight: "bold",
 //     fontSize: 16,
+//     marginBottom: 5,
+//   },
+//   button: {
+//     marginTop: 10,
+//     backgroundColor: "#4F46E5",
+//     padding: 10,
+//     borderRadius: 8,
+//     alignItems: "center",
+//   },
+//   buttonText: {
+//     color: "#fff",
+//     fontWeight: "bold",
 //   },
 // });
 
@@ -114,97 +95,130 @@
 import {
   View,
   Text,
-  TextInput,
+  FlatList,
   TouchableOpacity,
   StyleSheet,
   Alert,
 } from "react-native";
-import { useState } from "react";
-import API from "@/constants/api";
+import { useEffect, useState } from "react";
 import { router } from "expo-router";
+import API from "@/constants/api";
 
-export default function ClassScreen() {
-  const [subject, setSubject] = useState("");
-  const [radius, setRadius] = useState("");
+export default function TeacherClasses() {
+  const [classes, setClasses] = useState([]);
 
-  const createClass = async () => {
-    if (!subject || !radius) {
-      return Alert.alert("Error", "Subject and radius are required");
-    }
+  useEffect(() => {
+    fetchClasses();
+  }, []);
 
+  const fetchClasses = async () => {
     try {
-      await API.post("/class/add", {
-        subject,
-        latitude: 26.8467,   // demo campus latitude
-        longitude: 80.9462,  // demo campus longitude
-        radius: Number(radius),
-      });
-
-      Alert.alert("Success", "Class created successfully");
-      router.back();
-    } catch (err: any) {
-      console.log("CREATE CLASS ERROR:", err?.response?.data || err);
-      Alert.alert(
-        "Error",
-        err?.response?.data?.message || "Could not create class"
-      );
+      const res = await API.get("/classes/my");
+      setClasses(res.data);
+    } catch (error) {
+      console.error("Fetch classes error:", error);
+      alert("Failed to load classes");
     }
   };
 
+  // 🔴 DELETE FUNCTION
+  const handleDelete = (id: string) => {
+    Alert.alert(
+      "Delete Class",
+      "Are you sure you want to delete this class?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await API.delete(`/classes/${id}`);
+
+              // remove from UI
+              setClasses((prev: any) =>
+                prev.filter((c: any) => c._id !== id)
+              );
+
+              alert("Class deleted successfully");
+            } catch (error) {
+              console.error("Delete class error:", error);
+              alert("Delete failed");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>🏫 Create Class</Text>
+    <FlatList
+      data={classes}
+      keyExtractor={(c: any) => c._id}
+      renderItem={({ item }: any) => (
+        <View style={styles.card}>
+          <Text style={styles.subject}>
+            Subject: {item.subject?.name}
+          </Text>
 
-      <TextInput
-        placeholder="Subject (e.g. Data Structures)"
-        style={styles.input}
-        value={subject}
-        onChangeText={setSubject}
-      />
+          <Text>Students: {item.students.length}</Text>
 
-      <TextInput
-        placeholder="Attendance Radius (meters)"
-        style={styles.input}
-        value={radius}
-        onChangeText={setRadius}
-        keyboardType="numeric"
-      />
+          {/* ✅ View Students */}
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() =>
+              router.push(`/teacher/teacher-students?classId=${item._id}`)
+            }
+          >
+            <Text style={styles.buttonText}>View Students</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity style={styles.btn} onPress={createClass}>
-        <Text style={styles.btnText}>Create Class</Text>
-      </TouchableOpacity>
-    </View>
+          {/* 🔴 Delete Button */}
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={() => handleDelete(item._id)}
+          >
+            <Text style={styles.deleteText}>Delete Class</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#F4F6FA",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  input: {
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  btn: {
-    backgroundColor: "#4F46E5",
+  card: {
     padding: 15,
+    margin: 10,
+    backgroundColor: "#fff",
     borderRadius: 12,
-    alignItems: "center",
-    marginTop: 10,
+    elevation: 3,
   },
-  btnText: {
-    color: "#fff",
-    fontWeight: "700",
+  subject: {
+    fontWeight: "bold",
     fontSize: 16,
+    marginBottom: 5,
+  },
+  button: {
+    marginTop: 10,
+    backgroundColor: "#4F46E5",
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  deleteBtn: {
+    marginTop: 8,
+    backgroundColor: "#E53935",
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  deleteText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
