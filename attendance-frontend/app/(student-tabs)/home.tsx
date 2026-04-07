@@ -117,7 +117,7 @@ export default function StudentHome() {
       loadData();
     }, [])
   );
-
+console.log(activeClass);
 const loadData = async () => {
   try {
     setLoading(true);   // 🔥 ADD THIS LINE
@@ -170,7 +170,7 @@ const loadData = async () => {
             <Text style={styles.className}>
               {activeClass.subjectName}
             </Text>
-            <Text>Teacher: {activeClass.teacherName}</Text>
+            <Text>Teacher: {activeClass.teacherName || "Not assigned"}</Text>
 
             <TouchableOpacity
               style={styles.button}

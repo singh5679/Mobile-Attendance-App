@@ -113,7 +113,7 @@ export default function TeacherHome() {
       <View style={styles.header}>
         <Text style={styles.welcome}>👋 Welcome Back</Text>
         <Text style={styles.name}>{user.name}</Text>
-        <Text style={styles.subtitle}>Manage your Smart Attendance</Text>
+        <Text style={styles.subtitle}>Manage Your Smart Attendance</Text>
       </View>
 
       {/* Dashboard Card */}

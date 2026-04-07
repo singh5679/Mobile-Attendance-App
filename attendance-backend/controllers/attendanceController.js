@@ -134,8 +134,8 @@ exports.markAttendance = async (req, res) => {
 // Get attendance history for a student
 exports.getHistory = async (req, res) => {
   try {
-    console.log("Logged userId:", req.userId);
-    console.log("Logged role:", req.userRole);
+    //console.log("Logged userId:", req.userId);
+    //console.log("Logged role:", req.userRole);
 
     // Only student allowed
     if (req.userRole !== "student") {

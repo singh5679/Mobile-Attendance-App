@@ -72,15 +72,17 @@ exports.getClasses = async (req, res) => {
     let classes;
 
     if (req.userRole === "teacher") {
-      classes = await Class.find({ teacherId: req.userId }).populate(
+      classes = await Class.find({ teacherId: req.userId })
+      .populate(
         "subject",
         "name",
-      );
+      ).populate("teacherId","name");//add
     } else {
-      classes = await Class.find({ students: req.userId }).populate(
+      classes = await Class.find({ students: req.userId })
+      .populate(
         "subject",
         "name",
-      );
+      ).populate("teacherId","name");//add
     }
 
     res.json(classes);
