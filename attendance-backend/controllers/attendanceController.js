@@ -20,117 +20,6 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c; // distance in meters
 }
 
-
-// exports.markAttendance = async (req, res) => {
-//   try {
-//     const { latitude, longitude, classId } = req.body;
-//     const userId = req.userId;
-
-//     if (!classId) {
-//       return res.status(400).json({ message: "ClassId required" });
-//     }
-
-//     const student = await User.findById(userId);
-//     if (!student) {
-//       return res.status(400).json({ message: "Student not found" });
-//     }
-
-//     // ✅ Get class using classId from frontend
-//     const cls = await Class.findById(classId);
-//     if (!cls) {
-//       return res.status(400).json({ message: "Class not found" });
-//     }
-
-//     // ✅ Check student is enrolled in this class
-//     if (!cls.students.some(id => id.toString() === userId)) {
-//       return res.status(403).json({ message: "Not enrolled in this class" });
-//     }
-
-//     // ✅ Prevent duplicate attendance (CLASS-WISE)
-//     const today = new Date();
-//     today.setHours(0, 0, 0, 0);
-
-//     const existing = await Attendance.findOne({
-//       student: userId,
-//       classId,
-//       date: { $gte: today },
-//     });
-
-//     if (existing) {
-//       return res.status(400).json({
-//         message: "Attendance already marked for today",
-//       });
-//     }
-
-//     // ✅ Calculate distance
-//     const distance = calculateDistance(
-//       latitude,
-//       longitude,
-//       cls.latitude,
-//       cls.longitude
-//     );
-
-//     console.log("Teacher Location:", cls.latitude, cls.longitude);
-//     console.log("Student Location:", latitude, longitude);
-//     console.log("Distance:", distance);
-//     console.log("Radius:", cls.radius);
-
-//     const status = distance <= cls.radius ? "present" : "absent";
-
-//     // if (distance > cls.radius) {
-//     //   return res.status(400).json({
-//     //     message: "Outside geo-fence ❌",
-//     //     status:"absent",
-//     //     distance,
-//     //   });
-//     // }
-
-//     if (distance > cls.radius) {
-
-//   await Attendance.create({
-//     student: userId,
-//     classId,
-//     subjectId: cls.subject,
-//     latitude,
-//     longitude,
-//     status: "absent",
-//     date: new Date(),
-//   });
-
-//   return res.status(400).json({
-//     message: "Outside geo-fence ❌",
-//     status: "absent",
-//     distance,
-//     allowedRadius: cls.radius,
-//   });
-// }
-
-
-//     // // ✅ Save attendance
-//     const attendance = await Attendance.create({
-//       student: userId,
-//       classId,
-//       subjectId: cls.subject, // auto get from class
-//       latitude,
-//       longitude,
-//       status,
-//       distance,
-//       date: new Date(),
-//     });
-
-//     res.json({
-//       message: "Attendance marked successfully",
-//       status,
-//       distance,
-//       allowedRadius: cls.radius,
-//     });
-
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
-
 exports.markAttendance = async (req, res) => {
   try {
     const { latitude, longitude, classId } = req.body;
@@ -255,7 +144,9 @@ exports.getHistory = async (req, res) => {
 
     const records = await Attendance.find({
       student: req.userId
-    }).populate("subjectId");
+    })
+    .populate("subjectId")
+    .sort({date : -1,_id: -1});
 
     console.log("Records found:", records.length);
 
@@ -266,6 +157,59 @@ exports.getHistory = async (req, res) => {
     res.status(500).json({ message: "Error fetching history" });
   }
 };
+exports.getClassAttendance = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { today } = req.query;
 
+    // Only teacher allowed
+    if (req.userRole !== "teacher") {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
+    const cls = await Class.findById(classId).populate("subject");
+    if (!cls) {
+      return res.status(404).json({ message: "Class not found" });
+    }
+    //fixed here 
+    if(!cls.teacherId){
+      return res.status(403).json({message:"Not your class"});
+    }
+
+    // Only owner teacher can view
+    if (cls.teacherId.toString() !== req.userId.toString()) {//teacherId
+      return res.status(403).json({ message: "Not your class" });
+    }
+
+    let filter = { classId };
+
+    if (today === "true") {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+
+      filter.date = { $gte: start, $lte: end };
+    }
+
+    const records = await Attendance.find(filter)
+      .populate("student", "name email enrollment")
+      .populate("subjectId", "name")
+      .sort({ date: -1 });
+
+    return res.json({
+      classId,
+      className: cls.name,
+      totalRecords: records.length,
+      records,
+    });
+  } catch (err) {
+    console.log("GET CLASS ATTENDANCE ERROR:", err);
+    return res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
+  }
+};
 

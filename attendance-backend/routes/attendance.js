@@ -14,8 +14,6 @@ router.post("/mark", authMiddleware, markAttendance);
 
 
 //histroy 
-
-
 router.get("/history", authMiddleware, attendanceController.getHistory);
 
 //summary 
@@ -58,6 +56,9 @@ router.get("/summary", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+//get class attendance (for teacher)
+router.get("/class/:classId", authMiddleware, attendanceController.getClassAttendance);
 
 
 

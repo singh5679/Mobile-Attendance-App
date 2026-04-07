@@ -36,3 +36,5 @@ app.listen(PORT, "0.0.0.0", () =>
   console.log(`Server running on port ${PORT}`)
 );
 // made change is "0.0.0.0"
+
+//to start Backend: cd attendance-backend && npx nodemon server.js

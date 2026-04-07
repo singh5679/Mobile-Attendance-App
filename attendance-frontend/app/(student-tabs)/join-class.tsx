@@ -45,11 +45,14 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
-import { useEffect, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useEffect, useState } from "react";
 import API from "@/constants/api";
+// import { useFocusEffect } from "expo-router";
 
 export default function JoinClass() {
   const [classes, setClasses] = useState([]);
+  const [loading , setLoading] = useState(false);
 
   useEffect(() => {
     fetchClasses();
@@ -57,13 +60,22 @@ export default function JoinClass() {
 
   const fetchClasses = async () => {
     try {
+      setLoading(true);
       const res = await API.get("/classes/all");
       setClasses(res.data);
     } catch (err) {
       console.error("Fetch classes error:", err);
       Alert.alert("Error", "Failed to load classes");
     }
+    finally{
+      setLoading(false);
+    }
   };
+  useFocusEffect(
+    useCallback(()=>{
+      fetchClasses();
+    },[])
+  );
 
   const handleJoin = async (classId: string) => {
     try {

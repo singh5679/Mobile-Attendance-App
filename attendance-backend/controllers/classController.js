@@ -1,4 +1,6 @@
+const mongoose = require("mongoose");
 const Class = require("../models/Class");
+const Attendance = require("../models/Attendance");
 const User = require("../models/User");
 /**
  * ✅ Teacher creates class
@@ -124,11 +126,12 @@ exports.getStudents = async (req, res) => {
   }
 };
 
-//delete class
+//delete class (histry se delete nahi ho raha tha )
 
 exports.deleteClass = async (req, res) => {
   try {
     const classId = req.params.id;
+
 
     const classData = await Class.findById(classId);
 
@@ -150,26 +153,47 @@ exports.deleteClass = async (req, res) => {
   }
 };
 
-// * ✅ Get Students of Specific Class (Teacher)
-//  */
-// exports.getStudents = async (req, res) => {
+//delete class (histry se delete ho raha tha )
+// exports.deleteClass = async (req, res) => {
+//   const classId = req.params.id;
+//   const teacherId = req.userId; // middleware se
+
+//   const session = await mongoose.startSession();
 //   try {
-//     if (req.userRole !== "teacher") {
-//       return res.status(403).json({ message: "Only teacher can view students" });
-//     }
+//     session.startTransaction();
 
-//     const classData = await Class.findById(req.params.classId)
-//       .populate("students", "name enrollment email");
-
-//     if (!classData) {
+//     // 1) class exists + owner check
+//     const cls = await Class.findById(classId).session(session);
+//     if (!cls) {
+//       await session.abortTransaction();
 //       return res.status(404).json({ message: "Class not found" });
 //     }
 
-//     res.json(classData.students);
+//     if (cls.teacher.toString() !== teacherId.toString()) {
+//       await session.abortTransaction();
+//       return res.status(403).json({ message: "Not allowed" });
+//     }
+
+//     // 2) remove class from all students joined list (if you store it)
+//     await User.updateMany(
+//       { joinedClasses: classId },
+//       { $pull: { joinedClasses: classId } },
+//       { session }
+//     );
+
+//     // 3) delete attendance records of this class
+//     await Attendance.deleteMany({ classId }, { session });
+
+//     // 4) delete class itself
+//     await Class.deleteOne({ _id: classId }, { session });
+
+//     await session.commitTransaction();
+//     return res.json({ message: "Class deleted everywhere (cascade done)" });
 //   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Failed to fetch students" });
+//     console.log("DELETE CLASS ERROR:", err);
+//     await session.abortTransaction();
+//     return res.status(500).json({ message: "Server error", error: err.message });
+//   } finally {
+//     session.endSession();
 //   }
 // };
-
-
