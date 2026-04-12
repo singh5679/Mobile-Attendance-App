@@ -34,6 +34,11 @@ const AttendanceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Subject",
     required: true
+  },
+  //addddd
+  subjectName:{
+    type:String,
+    required:true,
   }
 
 });

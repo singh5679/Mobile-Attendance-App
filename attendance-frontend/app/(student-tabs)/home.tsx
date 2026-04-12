@@ -1,94 +1,3 @@
-// import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-// import { router } from "expo-router";
-// import { useAuth } from "../../context/authContext";
-
-// export default function StudentHome() {
-//   const { user, logout } = useAuth();
-
-//   if (!user) return null;
-
-//   const handleLogout = async () => {
-//     await logout();
-//     router.replace("/login");
-//   };
-
-//   return (
-//     <View style={styles.container}>
-//       <Text style={styles.title}>Welcome 👋</Text>
-//       <Text style={styles.name}>{user.name}</Text>
-
-//       <View style={styles.card}>
-//         <TouchableOpacity
-//           style={styles.button}
-//           onPress={() => router.push("/(student-tabs)/join-class")}
-//         >
-//           <Text style={styles.buttonText}>Join Class</Text>
-//         </TouchableOpacity>
-
-//         <TouchableOpacity
-//           style={styles.button}
-//           onPress={() => router.push("/(student-tabs)/attendance")}
-//         >
-//           <Text style={styles.buttonText}>Mark Attendance</Text>
-//         </TouchableOpacity>
-
-//         <TouchableOpacity
-//           style={styles.button}
-//           onPress={() => router.push("/(student-tabs)/history")}
-//         >
-//           <Text style={styles.buttonText}>View History</Text>
-//         </TouchableOpacity>
-
-//         <TouchableOpacity
-//           style={[styles.button, styles.logout]}
-//           onPress={handleLogout}
-//         >
-//           <Text style={styles.buttonText}>Logout</Text>
-//         </TouchableOpacity>
-//       </View>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#F4F6FA",
-//     padding: 20,
-//     justifyContent: "center",
-//   },
-//   title: {
-//     fontSize: 22,
-//     textAlign: "center",
-//   },
-//   name: {
-//     fontSize: 26,
-//     fontWeight: "bold",
-//     textAlign: "center",
-//     marginBottom: 30,
-//   },
-//   card: {
-//     backgroundColor: "#fff",
-//     padding: 20,
-//     borderRadius: 15,
-//     elevation: 4,
-//   },
-//   button: {
-//     backgroundColor: "#4F46E5",
-//     padding: 15,
-//     borderRadius: 10,
-//     marginBottom: 15,
-//     alignItems: "center",
-//   },
-//   logout: {
-//     backgroundColor: "#E53935",
-//   },
-//   buttonText: {
-//     color: "#fff",
-//     fontWeight: "bold",
-//   },
-// });
-
 import React, { useCallback, useState } from "react";
 import {
   View,
@@ -117,7 +26,7 @@ export default function StudentHome() {
       loadData();
     }, [])
   );
-console.log(activeClass);
+
 const loadData = async () => {
   try {
     setLoading(true);   // 🔥 ADD THIS LINE
@@ -126,7 +35,7 @@ const loadData = async () => {
     setStudent(userRes.data);
 
     const classRes = await API.get("/classes/my");
-    setActiveClass(classRes.data);
+    setActiveClass(classRes.data[0]);//data[0]
 
     const attRes = await API.get("/attendance/summary");
    // console.log("SUMMARY RESPONSE:", attRes.data); // 🔥 Debug
@@ -138,7 +47,7 @@ const loadData = async () => {
     setLoading(false);
   }
 };
-
+//console.log(activeClass);
 
   if (loading) {
     return <ActivityIndicator size="large" style={{ flex: 1 }} />;
@@ -168,9 +77,9 @@ const loadData = async () => {
         {activeClass ? (
           <>
             <Text style={styles.className}>
-              {activeClass.subjectName}
+              {activeClass?.subjectName || activeClass?.subject?.name || "No subject "}
             </Text>
-            <Text>Teacher: {activeClass.teacherName || "Not assigned"}</Text>
+            <Text>Teacher: {activeClass?.teacherName || activeClass?.teacherId?.name || "Not Assigned"}</Text>
 
             <TouchableOpacity
               style={styles.button}

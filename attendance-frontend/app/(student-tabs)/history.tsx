@@ -15,6 +15,7 @@ type Attendance = {
   subjectId?: {
     name: string;
   };
+  subjectName?:string;
 };
 
 export default function History() {
@@ -72,7 +73,7 @@ export default function History() {
         <View style={styles.card}>
           {/* Subject */}
           <Text style={styles.subject}>
-            {item.subjectId?.name || "Unknown Subject"}
+            {item.subjectName || item.subjectId?.name || "Unknown Subject"}
           </Text>
 
           {/* Status Badge */}

@@ -20,6 +20,8 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c; // distance in meters
 }
 
+const subjectDoc = await Subject.findById(cls.subject);
+
 exports.markAttendance = async (req, res) => {
   try {
     const { latitude, longitude, classId } = req.body;
@@ -96,6 +98,7 @@ exports.markAttendance = async (req, res) => {
       student: userId,
       classId,
       subjectId: cls.subject,
+      subjectName:subjectDoc?.name||"unknown Subject",//addddddd
       latitude,
       longitude,
       status,
