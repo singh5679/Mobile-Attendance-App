@@ -20,8 +20,6 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c; // distance in meters
 }
 
-const subjectDoc = await Subject.findById(cls.subject);
-
 exports.markAttendance = async (req, res) => {
   try {
     const { latitude, longitude, classId } = req.body;
@@ -36,7 +34,18 @@ exports.markAttendance = async (req, res) => {
       return res.status(400).json({ message: "Student not found" });
     }
 
-    const cls = await Class.findById(classId);
+    // const cls = await Class.findById(classId);
+    // // adddddd 
+    // const subjectDoc = await Subject.findById(cls.subject);
+    
+    //new add 13 april
+    const cls = await Class.findById(classId).populate("subject");
+
+    if (!cls) {
+    return res.status(400).json({ message: "Class not found" });
+    }
+//
+
     if (!cls) {
       return res.status(400).json({ message: "Class not found" });
     }
@@ -97,8 +106,8 @@ exports.markAttendance = async (req, res) => {
     const attendance = await Attendance.create({
       student: userId,
       classId,
-      subjectId: cls.subject,
-      subjectName:subjectDoc?.name||"unknown Subject",//addddddd
+      subjectId: cls.subject?._id,
+      subjectName:cls.subject?.name||"unknown Subject",//addddddd
       latitude,
       longitude,
       status,

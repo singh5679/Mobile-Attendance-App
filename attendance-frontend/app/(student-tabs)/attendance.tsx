@@ -7,10 +7,11 @@ import {
   ScrollView,
   View,
 } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useState ,useCallback} from "react";
 import * as Location from "expo-location";
 //import { router } from "expo-router";
 import API from "@/constants/api";
+import { useFocusEffect } from "@react-navigation/native";
 
 type ClassType = {
   _id: string;
@@ -26,29 +27,43 @@ export default function MarkAttendance() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
 
-  useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const res = await API.get("/classes/my");
-        setClasses(res.data);
-      } catch (err: any) {
-        console.log(err);
-        Alert.alert("Error", "Failed to load classes");
-      }
-    };
 
+  // useEffect(() => {
+  //   const fetchClasses = async () => {
+  //     try {
+  //       const res = await API.get("/classes/my");
+  //       setClasses(res.data);
+  //     } catch (err: any) {
+  //       console.log(err);
+  //       Alert.alert("Error", "Failed to load classes");
+  //     }
+  //   };
+
+  //   fetchClasses();
+  // }, []);
+const fetchClasses = async () => {
+  try {
+    const res = await API.get("/classes/my");
+    setClasses(res.data);
+  } catch (err: any) {
+    console.log(err);
+    Alert.alert("Error", "Failed to load classes");
+  }
+};
+useFocusEffect(
+  useCallback(() => {
     fetchClasses();
-  }, []);
+  }, [])
+);
+
 
   const markAttendance = async () => {
-    try {
-      setLoading(true);
-
-      if (!classId) {
+    if (!classId) {
         Alert.alert("Select Class", "Please select a class first");
         return;
       }
-
+    try {
+      setLoading(true);
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== "granted") {
@@ -66,7 +81,9 @@ export default function MarkAttendance() {
         classId,
       });
 
-      setResult(res.data);
+      setResult(res.data);//adddddr
+      await fetchClasses();
+      setClassId("");
     } catch (err: any) {
       Alert.alert("Error", err?.response?.data?.message || "Server error");
     } finally {
@@ -98,7 +115,10 @@ export default function MarkAttendance() {
         <TouchableOpacity
           key={c._id}
           style={[styles.subjectCard, classId === c._id && styles.selectedCard]}
-          onPress={() => setClassId(c._id)}
+          onPress={() => { //addddd
+            setClassId(c._id);
+            setResult(null)
+          }}
         >
           <Text
             style={[
